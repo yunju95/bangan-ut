@@ -247,7 +247,11 @@ function AdminView({ sheetTesters }) {
       <div className="hdr">
         <div>
           <div style={{fontSize:16,fontWeight:700,color:C.dark}}>방안 UT 테스트 결과</div>
-          <div style={{fontSize:12,color:C.light,marginTop:2}}>2025년 6월 진행 · 참가자 {testers.length}명</div>
+          <div style={{fontSize:12,color:C.light,marginTop:2}}>
+            {testers.length > 0 && testers[0]["테스트시작"]
+              ? `${new Date().getFullYear()}년 ${new Date().getMonth()+1}월 진행`
+              : "방안 UT 테스트"} · 참가자 {testers.length}명
+          </div>
         </div>
         <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
           <span style={{background:C.primarySoft,color:C.primary,fontSize:12,fontWeight:600,padding:"5px 12px",borderRadius:99}}>✅ {testers.length}명 완료</span>
@@ -345,11 +349,15 @@ function CumulativeView({va, testers=[]}) {
   const hasData = testers.length > 0;
 
   // Sheets 데이터에서 문항별 점수 배열 계산
-  const questionsWithScores = QUESTIONS.map(q => ({
-    ...q,
-    scores: testers.map(t => Number(t[q.id+"(점수)"]||0)).filter(v=>v>0),
-    allTesters: testers,
-  }));
+  const questionsWithScores = QUESTIONS.map(q => {
+    const scores = testers.map(t => {
+      // 여러 가능한 키 이름 시도
+      const v = t[q.id+"(점수)"] ?? t[q.id+"(점수) "] ?? t[" "+q.id+"(점수)"] ?? "";
+      const n = Number(String(v).trim());
+      return isNaN(n) ? 0 : n;
+    }).filter(v => v > 0);
+    return { ...q, scores, allTesters: testers };
+  });
 
   return (
     <div>
