@@ -124,14 +124,14 @@ function extractKW(answers) {
   return Object.entries(freq).filter(([,c])=>c>=2).sort((a,b)=>b[1]-a[1]).slice(0,12).map(([word,count])=>({word,count}));
 }
 
-function downloadCSV(va, locked) {
+function downloadCSV(va, locked, sheetData=[]) {
   const fixedHeaders = ["진행자","성별","출생년","직업","거주지","1인가구"];
   const scoreHeaders = QUESTIONS.map(q=>q.id+"(점수)");
   const verbalHeaders = VERBAL_QS.map(q=>q.tag+" "+q.text.slice(0,20)+"...");
   const allHeaders = [...fixedHeaders, ...scoreHeaders, ...verbalHeaders];
-  const rows = TESTERS.map((t,i) => {
-    const fixed = [t.facilitator, t.gender, t.birth, t.job, t.region, t.household];
-    const scores = QUESTIONS.map(q=>q.scores[i]);
+  const rows = sheetData.map((t,i) => {
+    const fixed = [t.진행자||t.facilitator||"", t.성별||t.gender||"", t.출생년||t.birth||"", t.직업||t.job||"", t.거주지||t.region||"", t["1인가구"]||t.household||""];
+    const scores = QUESTIONS.map(q=>t[q.id+"(점수)"]||va[`${q.id}_${i}`]||"");
     const verbals = VERBAL_QS.map(q=>va[`${q.id}_${i}`]||"");
     return [...fixed,...scores,...verbals].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",");
   });
@@ -229,7 +229,7 @@ function AdminView({ sheetTesters }) {
         </div>
         <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
           <span style={{background:C.primarySoft,color:C.primary,fontSize:12,fontWeight:600,padding:"5px 12px",borderRadius:99}}>✅ {testers.length}명 완료</span>
-          <button onClick={()=>downloadCSV(va,locked)} style={{padding:"6px 14px",borderRadius:99,background:C.green,color:"#fff",fontSize:12,fontWeight:700,border:"none",cursor:"pointer"}}>⬇ 시트 다운로드</button>
+          <button onClick={()=>downloadCSV(va,locked,testers)} style={{padding:"6px 14px",borderRadius:99,background:C.green,color:"#fff",fontSize:12,fontWeight:700,border:"none",cursor:"pointer"}}>⬇ 시트 다운로드</button>
           <button
             onClick={()=>{ if(!locked) setConfirmOpen(true); }}
             style={{padding:"6px 14px",borderRadius:99,background:locked?"#E8E0F0":C.red,color:locked?C.light:"#fff",fontSize:12,fontWeight:700,border:"none",cursor:locked?"default":"pointer"}}
@@ -281,14 +281,15 @@ function BarWithTooltip({score, count, totalTesters}) {
   return null; // handled in parent
 }
 
-function ScoreBar({q}) {
+function ScoreBar({q, allTesters=[]}) {
   const [hoveredScore, setHoveredScore] = useState(null);
   const ds = d5(q.scores);
+  const total = Math.max(q.scores.length, 1);
   return (
     <div>
       {ds.map(({score,count}) => {
-        const testers = TESTERS.filter((_,i)=>q.scores[i]===score);
-        const names = testers.map(t=>t.facilitator);
+        const scorers = allTesters.filter((_,i)=>q.scores[i]===score);
+        const names = scorers.map(t=>t.진행자||t.facilitator||"");
         const unique = [...new Set(names)];
         return (
           <div className="brow" key={score} style={{position:"relative"}}>
@@ -297,7 +298,7 @@ function ScoreBar({q}) {
               {count > 0 ? (
                 <div
                   className="bseg"
-                  style={{width:`${(count/6)*100}%`}}
+                  style={{width:`${(count/total)*100}%`}}
                   onMouseEnter={()=>setHoveredScore(score)}
                   onMouseLeave={()=>setHoveredScore(null)}
                 >
@@ -319,7 +320,15 @@ function ScoreBar({q}) {
 
 function CumulativeView({va, testers=[]}) {
   const kw = extractKW(va);
-  const hasData = QUESTIONS.some(q => q.scores.length > 0);
+  const hasData = testers.length > 0;
+
+  // Sheets 데이터에서 문항별 점수 배열 계산
+  const questionsWithScores = QUESTIONS.map(q => ({
+    ...q,
+    scores: testers.map(t => Number(t[q.id+"(점수)"]||0)).filter(v=>v>0),
+    allTesters: testers,
+  }));
+
   return (
     <div>
       {!hasData && (
@@ -342,15 +351,17 @@ function CumulativeView({va, testers=[]}) {
         </div>
       )}
       <div className="q-grid">
-        {QUESTIONS.map(q=>(
+        {questionsWithScores.map(q=>(
           <div className="qb" key={q.id}>
             <div className="q-meta">
               <span className="qtag">{q.phase}</span>
               <span className="qtext">{q.text}</span>
             </div>
-            <ScoreBar q={q} />
+            <ScoreBar q={q} allTesters={testers} />
             <div style={{fontSize:10,color:C.light,marginTop:7}}>
-              {d5(q.scores).filter(x=>x.count>0).map(x=>`${x.score}점 ${x.count}명`).join(" · ")}
+              {q.scores.length > 0
+                ? d5(q.scores).filter(x=>x.count>0).map(x=>`${x.score}점 ${x.count}명`).join(" · ")
+                : "데이터 없음"}
             </div>
           </div>
         ))}
@@ -388,7 +399,7 @@ function VerbalEditView({va, setVa, locked, testers=[]}) {
       <div style={{display:"flex",flexDirection:"column",gap:8}}>
         {filtered.map(q=>{
           const isOpen = open===q.id;
-          const cnt = TESTERS.filter((_,i)=>get(i,q.id).trim()).length;
+          const cnt = testers.filter((_,i)=>get(i,q.id).trim()).length;
           return (
             <div key={q.id} style={{background:C.white,borderRadius:13,border:`1.5px solid ${isOpen?C.primary:C.border}`,overflow:"hidden",transition:"border-color .18s"}}>
               <div onClick={()=>setOpen(isOpen?null:q.id)} style={{display:"flex",alignItems:"flex-start",gap:9,padding:"13px 15px",cursor:"pointer"}}>
