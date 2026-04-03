@@ -115,6 +115,25 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzj4KJhggp0HBIEF9t3M
 
 const d5 = arr => [5,4,3,2,1].map(s => ({score:s, count:arr.filter(x=>x===s).length}));
 
+// 날짜 문자열 정제 — "Sun Dec 31 1899 06:19:45..." → "06:19:45"
+function cleanTime(val) {
+  if (!val || val === "—") return "—";
+  const s = String(val);
+  // HH:MM:SS 패턴 추출
+  const m = s.match(/(\d{1,2}:\d{2}:\d{2})/);
+  if (m) return m[1];
+  // 이미 깔끔한 형태면 그대로
+  if (s.length <= 8 && s.includes(":")) return s;
+  return "—";
+}
+
+// 나이 계산 — NaN 방지
+function calcAge(birthYear) {
+  const y = parseInt(birthYear);
+  if (!y || isNaN(y) || y < 1900 || y > 2020) return "—";
+  return (new Date().getFullYear() - y) + "세";
+}
+
 function extractKW(answers) {
   const all = Object.values(answers).join(" ");
   if (!all.trim()) return [];
@@ -501,7 +520,7 @@ function RespondentView({ testers=[] }) {
                 <div style={{width:25,height:25,borderRadius:7,background:`linear-gradient(135deg,${C.primaryLight},${C.primary})`,display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontSize:11,fontWeight:800,flexShrink:0}}>{i+1}</div>
                 <div style={{flex:1}}>
                   <div style={{fontSize:12,fontWeight:700,color:C.dark}}>진행자: {t.facilitator}</div>
-                  <div style={{fontSize:11,color:C.light,marginTop:1}}>{t.gender} · {2025-t.birth}세 · {t.job} · {t.region} · {t.household}</div>
+                  <div style={{fontSize:11,color:C.light,marginTop:1}}>{t["성별"]||t.gender||"—"} · {calcAge(t["출생년"]||t.birth)} · {t["직업"]||t.job||"—"} · {t["거주지"]||t.region||"—"} · {t["1인가구"]||t.household||"—"}</div>
                 </div>
                 <div style={{display:"flex",gap:3,flexWrap:"wrap"}}>
                   {QUESTIONS.map(q=><span key={q.id} className={`sc s${q.scores[i]}`}>{q.scores[i]}</span>)}
@@ -512,9 +531,7 @@ function RespondentView({ testers=[] }) {
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:7}}>
                   <span style={{fontSize:10,fontWeight:700,color:C.primary}}>⏱ 총 소요시간</span>
                   <span style={{fontSize:13,fontWeight:800,color:C.primary}}>
-                    {(testers[i] && testers[i]["종료"] && testers[i]["테스트시작"])
-                      ? testers[i]["종료"] + " 종료"
-                      : "—"}
+                    {cleanTime(testers[i] && testers[i]["종료"])}
                   </span>
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:6}}>
@@ -528,7 +545,7 @@ function RespondentView({ testers=[] }) {
                     <div key={ph.key} style={{background:C.white,borderRadius:8,padding:"5px 7px",textAlign:"center",border:`1px solid ${C.border}`}}>
                       <div style={{fontSize:9,fontWeight:700,color:C.light,marginBottom:2}}>{ph.label}</div>
                       <div style={{fontSize:11,fontWeight:800,color:C.primary,fontVariantNumeric:"tabular-nums",letterSpacing:"0.5px"}}>
-                        {(testers[i] && testers[i][ph.key]) ? String(testers[i][ph.key]).slice(0,8) : "—"}
+                        {cleanTime(testers[i] && testers[i][ph.key])}
                       </div>
                     </div>
                   ))}
