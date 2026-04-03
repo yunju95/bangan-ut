@@ -146,16 +146,21 @@ function downloadCSV(va, locked, sheetData=[]) {
 export default function AdminPage() {
   const [tab, setTab] = useState("admin");
   const [sheetTesters, setSheetTesters] = useState([]);
+  const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
     fetch(SCRIPT_URL + "?t=" + Date.now())
       .then(r => r.json())
       .then(data => {
-        if (data.testers && data.testers.length > 0) {
-          setSheetTesters(data.testers);
+        if (data && Array.isArray(data.testers) && data.testers.length > 0) {
+          // 빈 행 제거 + 최소 진행자 필드 있는 행만 허용
+          const valid = data.testers.filter(t =>
+            t && typeof t === "object" && (t["진행자"] || t["facilitator"])
+          );
+          if (valid.length > 0) setSheetTesters(valid);
         }
       })
-      .catch(() => {});
+      .catch(() => setFetchError(true));
   }, []);
   return (
     <>
@@ -167,6 +172,11 @@ export default function AdminPage() {
           ))}
         </div>
         <div className="page">
+          {fetchError && (
+            <div style={{background:"#FFF4E8",border:"1px solid #E8943A",borderRadius:12,padding:"10px 16px",marginBottom:12,fontSize:12,color:"#C07020"}}>
+              ⚠️ Sheets 연결 실패. 서술형 편집은 정상 사용 가능합니다.
+            </div>
+          )}
           {tab==="admin"   && <AdminView sheetTesters={sheetTesters} />}
           {tab==="sheets"  && <SheetsView sheetTesters={sheetTesters} />}
           {tab==="compare" && <CompareView />}
@@ -442,17 +452,17 @@ function RespondentView({ testers=[] }) {
       </div>
     );
   }
-  const mk = (field, vals) => vals.map(v=>({label:v, count:testers.filter(t=>t[field]===v).length}));
-  const gender = mk("gender",["여","남"]);
+  const mk = (field, vals) => vals.map(v=>({label:v, count:testers.filter(t=>t && t[field]===v).length}));
+  const gender = mk("성별",["여","남"]);
   const curYear = new Date().getFullYear();
   const age = [
-    {label:"20~22세", count:testers.filter(t=>(curYear-t.출생년)>=20&&(curYear-t.출생년)<=22).length},
-    {label:"23~26세", count:testers.filter(t=>(curYear-t.출생년)>=23&&(curYear-t.출생년)<=26).length},
-    {label:"27~30세", count:testers.filter(t=>(curYear-t.출생년)>=27).length},
+    {label:"20~22세", count:testers.filter(t=>t && (curYear-(Number(t.출생년)||0))>=20&&(curYear-(Number(t.출생년)||0))<=22).length},
+    {label:"23~26세", count:testers.filter(t=>t && (curYear-(Number(t.출생년)||0))>=23&&(curYear-(Number(t.출생년)||0))<=26).length},
+    {label:"27~30세", count:testers.filter(t=>t && (curYear-(Number(t.출생년)||0))>=27).length},
   ];
-  const jobs = [...new Set(testers.map(t=>t.직업||""))].filter(Boolean).map(j=>({label:j,count:testers.filter(t=>t.직업===j).length}));
-  const hh   = [...new Set(testers.map(t=>t["1인가구"]||""))].filter(Boolean).map(h=>({label:h,count:testers.filter(t=>t["1인가구"]===h).length}));
-  const rg   = [...new Set(testers.map(t=>t.거주지||""))].filter(Boolean).map(r=>({label:r,count:testers.filter(t=>t.거주지===r).length}));
+  const jobs = [...new Set(testers.map(t=>t&&t.직업||"").filter(Boolean))].map(j=>({label:j,count:testers.filter(t=>t&&t.직업===j).length}));
+  const hh   = [...new Set(testers.map(t=>t&&t["1인가구"]||"").filter(Boolean))].map(h=>({label:h,count:testers.filter(t=>t&&t["1인가구"]===h).length}));
+  const rg   = [...new Set(testers.map(t=>t&&t.거주지||"").filter(Boolean))].map(r=>({label:r,count:testers.filter(t=>t&&t.거주지===r).length}));
 
   const DistCard = ({title,rows}) => {
     const tot = rows.reduce((s,r)=>s+r.count,0);
