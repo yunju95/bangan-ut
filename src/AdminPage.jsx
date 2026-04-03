@@ -545,6 +545,7 @@ function RespondentView({ testers=[] }) {
 // ─── Sheets ───────────────────────────────────────────────────────────
 function SheetsView({ sheetTesters=[] }) {
   const fixedCols = ["진행자","성별","출생년","직업","거주지","1인가구"];
+  const fixedWidths = [70,40,52,80,60,70];
 
   if (sheetTesters.length === 0) {
     return (
@@ -555,13 +556,13 @@ function SheetsView({ sheetTesters=[] }) {
         <div style={{background:C.white,borderRadius:14,padding:"28px 20px",border:`1px solid ${C.border}`,textAlign:"center"}}>
           <div style={{fontSize:28,marginBottom:12}}>📊</div>
           <div style={{fontSize:14,fontWeight:700,color:C.dark,marginBottom:6}}>아직 시트 데이터가 없습니다</div>
-          <div style={{fontSize:13,color:C.light,lineHeight:1.7}}>테스트가 완료되면 응답자별 데이터가 여기에 표시됩니다.<br/>서술형 편집 탭에서 먼저 답변을 입력할 수 있습니다.</div>
+          <div style={{fontSize:13,color:C.light,lineHeight:1.7}}>테스트가 완료되면 응답자별 데이터가 여기에 표시됩니다.</div>
         </div>
       </div>
     );
   }
 
-  const displayTesters = sheetTesters.length > 0 ? sheetTesters : [];
+  const displayTesters = sheetTesters;
 
   const FixedTable = () => (
     <table className="stbl fixed-col">
@@ -569,10 +570,14 @@ function SheetsView({ sheetTesters=[] }) {
         <tr>{fixedCols.map((c,i)=><th key={c} style={{minWidth:fixedWidths[i]}}>{c}</th>)}</tr>
       </thead>
       <tbody>
-        {(testers.length>0?testers:TESTERS).map((t,i)=>(
+        {displayTesters.map((t,i)=>(
           <tr key={i}>
-            <td>{t.facilitator}</td><td>{t.gender}</td><td>{t.birth}</td>
-            <td>{t.job}</td><td>{t.region}</td><td>{t.household}</td>
+            <td>{t["진행자"]||"—"}</td>
+            <td>{t["성별"]||"—"}</td>
+            <td>{t["출생년"]||"—"}</td>
+            <td>{t["직업"]||"—"}</td>
+            <td>{t["거주지"]||"—"}</td>
+            <td>{t["1인가구"]||"—"}</td>
           </tr>
         ))}
       </tbody>
@@ -588,10 +593,13 @@ function SheetsView({ sheetTesters=[] }) {
         </tr>
       </thead>
       <tbody>
-        {(testers.length>0?testers:TESTERS).map((t,i)=>(
+        {displayTesters.map((t,i)=>(
           <tr key={i}>
-            {QUESTIONS.map(q=><td key={q.id}><span className={`sc s${q.scores[i]}`}>{q.scores[i]}</span></td>)}
-            {VERBAL_QS.map(q=><td key={q.id} style={{fontSize:10,color:C.mid}}>—</td>)}
+            {QUESTIONS.map(q=>{
+              const val = t[q.id+"(점수)"];
+              return <td key={q.id}>{val ? <span className={`sc s${val}`}>{val}</span> : <span style={{color:C.light}}>—</span>}</td>;
+            })}
+            {VERBAL_QS.map(q=><td key={q.id} style={{fontSize:10,color:C.light}}>녹음확인</td>)}
           </tr>
         ))}
       </tbody>
