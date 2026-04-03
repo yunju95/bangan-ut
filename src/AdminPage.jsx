@@ -61,24 +61,17 @@ body,#root{font-family:'Noto Sans KR',sans-serif;background:#F0EAF9;min-height:1
 `;
 
 // ─── DATA ───────────────────────────────────────────────────────────
-const TESTERS = [
-  {facilitator:"홍길동", gender:"여", birth:1998, job:"직장인",     region:"서울시", household:"1인가구"},
-  {facilitator:"홍길동", gender:"남", birth:2001, job:"취업준비생", region:"경기도", household:"본가"},
-  {facilitator:"김민지", gender:"여", birth:1995, job:"프리랜서",   region:"부산시", household:"룸메와 자취"},
-  {facilitator:"김민지", gender:"남", birth:2000, job:"학생",       region:"인천시", household:"본가"},
-  {facilitator:"이수현", gender:"여", birth:1997, job:"직장인",     region:"대전시", household:"1인가구"},
-  {facilitator:"이수현", gender:"여", birth:1999, job:"취업준비생", region:"광주시", household:"곧 독립 예정"},
-];
+const TESTERS = []; // 실제 테스트 데이터가 입력되면 채워집니다
 
 const QUESTIONS = [
-  {id:"P1-Q6",  phase:"P1", text:"신청 UX 수월함",           scores:[4,3,4,2,5,3]},
-  {id:"P1-Q8",  phase:"P1", text:"금융/행정 용어 이해 용이성",scores:[3,2,4,2,4,3]},
-  {id:"P1-Q10", phase:"P1", text:"'어려워요' 정보 도움 여부", scores:[4,4,5,3,5,4]},
-  {id:"P1-Q11", phase:"P1", text:"맞춤 추천 즉각 행동 유도",  scores:[5,3,5,4,5,5]},
-  {id:"P2-Q1",  phase:"P2", text:"컬러톤 신뢰감",             scores:[4,3,5,4,4,3]},
-  {id:"P2-Q11", phase:"P2", text:"화면 복잡도 (1복잡~5단순)", scores:[3,4,3,5,4,3]},
-  {id:"P3-Q4",  phase:"P3", text:"탐색 시간/에너지 절약 예상",scores:[4,3,5,4,5,4]},
-  {id:"P3-Q6",  phase:"P3", text:"방안 앱 전반 평가",         scores:[5,4,5,4,5,4]},
+  {id:"P1-Q6",  phase:"P1", text:"신청 UX 수월함",           scores:[]},
+  {id:"P1-Q8",  phase:"P1", text:"금융/행정 용어 이해 용이성",scores:[]},
+  {id:"P1-Q10", phase:"P1", text:"'어려워요' 정보 도움 여부", scores:[]},
+  {id:"P1-Q11", phase:"P1", text:"맞춤 추천 즉각 행동 유도",  scores:[]},
+  {id:"P2-Q1",  phase:"P2", text:"컬러톤 신뢰감",             scores:[]},
+  {id:"P2-Q11", phase:"P2", text:"화면 복잡도 (1복잡~5단순)", scores:[]},
+  {id:"P3-Q4",  phase:"P3", text:"탐색 시간/에너지 절약 예상",scores:[]},
+  {id:"P3-Q6",  phase:"P3", text:"방안 앱 전반 평가",         scores:[]},
 ];
 
 const VERBAL_QS = [
@@ -113,28 +106,10 @@ const VERBAL_QS = [
   {id:"p3q9", phase:"P3", tag:"Q9",  text:"사용하면서 가장 불편했거나, 추가되었으면 하는 기능이 있다면 자유롭게 말씀해 주세요.", intent:"개선 기회 발굴"},
 ];
 
-const MOCK_DURATION = ["58분 22초","64분 10초","61분 45초","59분 08초","67분 33초","62분 50초"];
+const MOCK_DURATION = [];
 
-// 절대시간 → 시작 기준 경과 초
-function toSec(hms) {
-  const [h,m,s] = hms.split(":").map(Number);
-  return h*3600 + m*60 + s;
-}
-function elapsedFmt(startHMS, targetHMS) {
-  const diff = toSec(targetHMS) - toSec(startHMS);
-  const m = Math.floor(diff / 60);
-  const s = diff % 60;
-  return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
-}
 
-const MOCK_PHASE_TIMES = [
-  {start:"14:00:12", p0:"14:00:12", p1:"14:10:34", p2:"14:31:05", p3:"14:51:22", end:"14:58:34"},
-  {start:"15:15:00", p0:"15:15:00", p1:"15:25:18", p2:"15:47:33", p3:"16:09:44", end:"16:19:10"},
-  {start:"10:05:33", p0:"10:05:33", p1:"10:15:50", p2:"10:37:07", p3:"10:57:40", end:"11:06:18"},
-  {start:"13:22:44", p0:"13:22:44", p1:"13:32:59", p2:"13:54:18", p3:"14:12:05", end:"14:21:52"},
-  {start:"16:01:15", p0:"16:01:15", p1:"16:11:28", p2:"16:32:40", p3:"16:52:22", end:"17:08:48"},
-  {start:"09:33:20", p0:"09:33:20", p1:"09:43:41", p2:"10:05:05", p3:"10:25:48", end:"10:36:10"},
-];
+const MOCK_PHASE_TIMES = [];
 
 const d5 = arr => [5,4,3,2,1].map(s => ({score:s, count:arr.filter(x=>x===s).length}));
 
@@ -226,11 +201,10 @@ function AdminView() {
       <div className="hdr">
         <div>
           <div style={{fontSize:16,fontWeight:700,color:C.dark}}>방안 UT 테스트 결과</div>
-          <div style={{fontSize:12,color:C.light,marginTop:2}}>2025년 6월 진행 · 참가자 6명</div>
+          <div style={{fontSize:12,color:C.light,marginTop:2}}>테스트 진행 전 · 참가자 0명</div>
         </div>
         <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
-          <span style={{background:C.primarySoft,color:C.primary,fontSize:12,fontWeight:600,padding:"5px 12px",borderRadius:99}}>✅ 완료 4명</span>
-          <span style={{background:C.orangeBg,color:C.orange,fontSize:12,fontWeight:600,padding:"5px 12px",borderRadius:99}}>⏳ 진행중 2명</span>
+          <span style={{background:C.primarySoft,color:C.primary,fontSize:12,fontWeight:600,padding:"5px 12px",borderRadius:99}}>대기중</span>
           <button onClick={()=>downloadCSV(va,locked)} style={{padding:"6px 14px",borderRadius:99,background:C.green,color:"#fff",fontSize:12,fontWeight:700,border:"none",cursor:"pointer"}}>⬇ 시트 다운로드</button>
           <button
             onClick={()=>{ if(!locked) setConfirmOpen(true); }}
@@ -242,13 +216,13 @@ function AdminView() {
       <div className="cards">
         <div className="card">
           <div className="card-lbl">전체 응답자</div>
-          <div className="card-val">6<span style={{fontSize:15,fontWeight:500}}>명</span></div>
-          <div className="card-sub">목표 6명 달성</div>
+          <div className="card-val">0<span style={{fontSize:15,fontWeight:500}}>명</span></div>
+          <div className="card-sub">테스트 진행 후 업데이트</div>
         </div>
         <div className="card">
           <div className="card-lbl">평균 소요시간</div>
-          <div className="card-val">62<span style={{fontSize:15,fontWeight:500}}>분</span></div>
-          <div className="card-sub">최단 58분 · 최장 68분</div>
+          <div className="card-val">—</div>
+          <div className="card-sub">테스트 진행 후 업데이트</div>
         </div>
       </div>
 
@@ -321,8 +295,16 @@ function ScoreBar({q}) {
 
 function CumulativeView({va}) {
   const kw = extractKW(va);
+  const hasData = QUESTIONS.some(q => q.scores.length > 0);
   return (
     <div>
+      {!hasData && (
+        <div style={{background:C.white,borderRadius:14,padding:"28px 20px",border:`1px solid ${C.border}`,marginBottom:12,textAlign:"center"}}>
+          <div style={{fontSize:28,marginBottom:12}}>📋</div>
+          <div style={{fontSize:14,fontWeight:700,color:C.dark,marginBottom:6}}>아직 테스트 데이터가 없습니다</div>
+          <div style={{fontSize:13,color:C.light,lineHeight:1.7}}>테스트가 완료되면 점수 분포가 여기에 표시됩니다.<br/>서술형 편집 탭에서 답변을 직접 입력할 수 있습니다.</div>
+        </div>
+      )}
       {kw.length>0 && (
         <div style={{background:C.white,borderRadius:14,padding:"15px 18px",border:`1px solid ${C.border}`,marginBottom:12}}>
           <div style={{fontSize:11,fontWeight:700,color:C.light,textTransform:"uppercase",letterSpacing:.5,marginBottom:10}}>서술형 응답 키워드</div>
@@ -423,6 +405,15 @@ function VerbalEditView({va, setVa, locked}) {
 
 // ─── Respondent ───────────────────────────────────────────────────────
 function RespondentView() {
+  if (TESTERS.length === 0) {
+    return (
+      <div style={{background:C.white,borderRadius:14,padding:"28px 20px",border:`1px solid ${C.border}`,textAlign:"center"}}>
+        <div style={{fontSize:28,marginBottom:12}}>👥</div>
+        <div style={{fontSize:14,fontWeight:700,color:C.dark,marginBottom:6}}>아직 응답자 데이터가 없습니다</div>
+        <div style={{fontSize:13,color:C.light,lineHeight:1.7}}>테스트가 완료되면 응답자 분포가 여기에 표시됩니다.</div>
+      </div>
+    );
+  }
   const mk = (field, vals) => vals.map(v=>({label:v, count:TESTERS.filter(t=>t[field]===v).length}));
   const gender = mk("gender",["여","남"]);
   const age = [
@@ -511,10 +502,21 @@ function RespondentView() {
 // ─── Sheets ───────────────────────────────────────────────────────────
 function SheetsView() {
   const fixedCols = ["진행자","성별","출생년","직업","거주지","1인가구"];
-  const scrollCols = [...QUESTIONS.map(q=>q.id+"(점수)"), ...VERBAL_QS.map(q=>q.tag)];
 
-  const fixedWidths = [70,40,50,80,60,70];
-  const totalFixed = fixedWidths.reduce((a,b)=>a+b,0)+fixedWidths.length*22;
+  if (TESTERS.length === 0) {
+    return (
+      <div>
+        <div style={{fontSize:13,color:C.mid,marginBottom:11,lineHeight:1.7}}>
+          좌측 6개 컬럼 고정 · 점수 및 서술형 답변 항목은 가로 스크롤.
+        </div>
+        <div style={{background:C.white,borderRadius:14,padding:"28px 20px",border:`1px solid ${C.border}`,textAlign:"center"}}>
+          <div style={{fontSize:28,marginBottom:12}}>📊</div>
+          <div style={{fontSize:14,fontWeight:700,color:C.dark,marginBottom:6}}>아직 시트 데이터가 없습니다</div>
+          <div style={{fontSize:13,color:C.light,lineHeight:1.7}}>테스트가 완료되면 응답자별 데이터가 여기에 표시됩니다.<br/>서술형 편집 탭에서 먼저 답변을 입력할 수 있습니다.</div>
+        </div>
+      </div>
+    );
+  }
 
   const FixedTable = () => (
     <table className="stbl fixed-col">
