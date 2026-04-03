@@ -146,12 +146,8 @@ function downloadCSV(va, locked, sheetData=[]) {
 export default function AdminPage() {
   const [tab, setTab] = useState("admin");
   const [sheetTesters, setSheetTesters] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 3초 타임아웃 — CORS 실패해도 어드민은 항상 표시
-    const timer = setTimeout(() => setLoading(false), 3000);
-
     fetch(SCRIPT_URL + "?t=" + Date.now())
       .then(r => r.json())
       .then(data => {
@@ -159,13 +155,7 @@ export default function AdminPage() {
           setSheetTesters(data.testers);
         }
       })
-      .catch(() => {})
-      .finally(() => {
-        clearTimeout(timer);
-        setLoading(false);
-      });
-
-    return () => clearTimeout(timer);
+      .catch(() => {});
   }, []);
   return (
     <>
@@ -177,16 +167,9 @@ export default function AdminPage() {
           ))}
         </div>
         <div className="page">
-          {loading && (
-            <div style={{textAlign:"center",padding:"60px 20px"}}>
-              <div style={{fontSize:28,marginBottom:12}}>🔄</div>
-              <div style={{fontSize:14,fontWeight:600,color:C.mid,marginBottom:6}}>Sheets에서 데이터를 불러오는 중...</div>
-              <div style={{fontSize:12,color:C.light}}>최대 3초 후 자동으로 표시됩니다</div>
-            </div>
-          )}
-          {!loading && tab==="admin"   && <AdminView sheetTesters={sheetTesters} />}
-          {!loading && tab==="sheets"  && <SheetsView sheetTesters={sheetTesters} />}
-          {!loading && tab==="compare" && <CompareView />}
+          {tab==="admin"   && <AdminView sheetTesters={sheetTesters} />}
+          {tab==="sheets"  && <SheetsView sheetTesters={sheetTesters} />}
+          {tab==="compare" && <CompareView />}
         </div>
       </div>
     </>

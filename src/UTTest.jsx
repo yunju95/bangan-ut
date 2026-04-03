@@ -279,17 +279,16 @@ const P2_STEPS = [
   },
   { type: "verbal", tag: "Q 10", q: "정책 상세 확인 및 비교 후 그 다음 행동으로 무엇을 하고 싶은가요?\n(저장, 공유, 신청 등)", key: "p2_q10", keyword: "UX 플로우" },
   { type: "verbal", tag: "Q 11", q: "'신청하기' 버튼을 누르기 전 단계에서, 본인이 보충하고 싶은 정보나 한번 더 확인하고 싶은 주의사항이 있나요?", key: "p2_q11" },
-  { type: "verbal", tag: "Q 12", q: "커뮤나타", key: "p2_q12" },
-  { type: "verbal", tag: "Q 13", q: "정부 정책이나 금융 정보를 확인하는 행위가 캐릭터를 성장시키는 것과 연결된다는 점이 본인에게 어떤 의미로 다가오나요?\n(재미, 성취감, 무관심 등)", key: "p2_q13", keyword: "캐릭터" },
+  { type: "verbal", tag: "Q 12", q: "정부 정책이나 금융 정보를 확인하는 행위가 캐릭터를 성장시키는 것과 연결된다는 점이 본인에게 어떤 의미로 다가오나요?\n(재미, 성취감, 무관심 등)", key: "p2_q13", keyword: "캐릭터" },
   {
-    type: "verbal", tag: "Q 14", key: "p2_q14", keyword: "캐릭터",
+    type: "verbal", tag: "Q 13", key: "p2_q14", keyword: "캐릭터",
     q: "이 캐릭터가 잘 성장한다면, 서비스를 더 자주 방문하고 싶어지는 동기가 될 것 같나요?",
     figmaLinks: [
       { label: "정책 상세 화면", url: "https://www.figma.com/proto/u0wNq6aZvGk4CadVlLA917/4%ED%8C%80_Main?node-id=1726-18094&t=ZIzzZANnLxNa3d18-1" },
     ]
   },
   {
-    type: "score-complex", tag: "Q 15", key: "p2_q15", keyword: "시각적 정보 밀도",
+    type: "score-complex", tag: "Q 14", key: "p2_q15", keyword: "시각적 정보 밀도",
     q: "[공통 UI 평가] 화면의 복잡도(정보량)를 1~5점으로 평가한다면 몇 점인가요?",
     sub: "1: 매우 복잡 → 5: 매우 단순",
     figmaLinks: [
@@ -301,7 +300,7 @@ const P2_STEPS = [
     ]
   },
   {
-    type: "verbal", tag: "Q 16", key: "p2_q16", keyword: "UX 라이팅",
+    type: "verbal", tag: "Q 15", key: "p2_q16", keyword: "UX 라이팅",
     q: "[공통 UX라이팅 평가]\n[정책-목록] : '어려워요'가 어떤 의미로 이해가 되나요?",
     figmaLinks: [
       { label: "정책 화면", url: "https://www.figma.com/proto/u0wNq6aZvGk4CadVlLA917/4%ED%8C%80_Main?node-id=1726-17322&t=ZIzzZANnLxNa3d18-1" },
