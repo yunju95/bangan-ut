@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 const C = {
   primary:"#8B6FD4", primaryLight:"#C97BE8", primarySoft:"#E8D5F7", primaryBg:"#F5EEFF",
@@ -111,6 +111,8 @@ const MOCK_DURATION = [];
 
 const MOCK_PHASE_TIMES = [];
 
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzj4KJhggp0HBIEF9t3My4Fl-8Sv5T8myLAHRqbLHuCECpKDPupbue2UJbyrnNgk2C0/exec";
+
 const d5 = arr => [5,4,3,2,1].map(s => ({score:s, count:arr.filter(x=>x===s).length}));
 
 function extractKW(answers) {
@@ -143,6 +145,20 @@ function downloadCSV(va, locked) {
 // ─── Main ────────────────────────────────────────────────────────────
 export default function AdminPage() {
   const [tab, setTab] = useState("admin");
+  const [sheetTesters, setSheetTesters] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(SCRIPT_URL)
+      .then(r => r.json())
+      .then(data => {
+        if (data.testers && data.testers.length > 0) {
+          setSheetTesters(data.testers);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
   return (
     <>
       <style>{css}</style>
@@ -153,9 +169,14 @@ export default function AdminPage() {
           ))}
         </div>
         <div className="page">
-          {tab==="admin"   && <AdminView />}
-          {tab==="sheets"  && <SheetsView />}
-          {tab==="compare" && <CompareView />}
+          {loading && (
+            <div style={{textAlign:"center",padding:"40px 20px",color:C.light,fontSize:13}}>
+              🔄 Sheets에서 데이터를 불러오는 중...
+            </div>
+          )}
+          {!loading && tab==="admin"   && <AdminView sheetTesters={sheetTesters} />}
+          {!loading && tab==="sheets"  && <SheetsView sheetTesters={sheetTesters} />}
+          {!loading && tab==="compare" && <CompareView />}
         </div>
       </div>
     </>
@@ -163,11 +184,14 @@ export default function AdminPage() {
 }
 
 // ─── Admin ───────────────────────────────────────────────────────────
-function AdminView() {
+function AdminView({ sheetTesters }) {
   const [sub, setSub] = useState("respondent");
   const [va, setVa] = useState({});
   const [locked, setLocked] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const testers = sheetTesters.length > 0 ? sheetTesters : TESTERS;
+  const hasData = testers.length > 0;
 
   return (
     <div style={{position:"relative"}}>
@@ -201,10 +225,10 @@ function AdminView() {
       <div className="hdr">
         <div>
           <div style={{fontSize:16,fontWeight:700,color:C.dark}}>방안 UT 테스트 결과</div>
-          <div style={{fontSize:12,color:C.light,marginTop:2}}>테스트 진행 전 · 참가자 0명</div>
+          <div style={{fontSize:12,color:C.light,marginTop:2}}>2025년 6월 진행 · 참가자 {testers.length}명</div>
         </div>
         <div style={{display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
-          <span style={{background:C.primarySoft,color:C.primary,fontSize:12,fontWeight:600,padding:"5px 12px",borderRadius:99}}>대기중</span>
+          <span style={{background:C.primarySoft,color:C.primary,fontSize:12,fontWeight:600,padding:"5px 12px",borderRadius:99}}>✅ {testers.length}명 완료</span>
           <button onClick={()=>downloadCSV(va,locked)} style={{padding:"6px 14px",borderRadius:99,background:C.green,color:"#fff",fontSize:12,fontWeight:700,border:"none",cursor:"pointer"}}>⬇ 시트 다운로드</button>
           <button
             onClick={()=>{ if(!locked) setConfirmOpen(true); }}
@@ -216,8 +240,8 @@ function AdminView() {
       <div className="cards">
         <div className="card">
           <div className="card-lbl">전체 응답자</div>
-          <div className="card-val">0<span style={{fontSize:15,fontWeight:500}}>명</span></div>
-          <div className="card-sub">테스트 진행 후 업데이트</div>
+          <div className="card-val">{testers.length}<span style={{fontSize:15,fontWeight:500}}>명</span></div>
+          <div className="card-sub">{testers.length > 0 ? `목표 6명 중 ${testers.length}명` : "테스트 진행 후 업데이트"}</div>
         </div>
         <div className="card">
           <div className="card-lbl">평균 소요시간</div>
@@ -237,9 +261,9 @@ function AdminView() {
         ))}
       </div>
 
-      {sub==="respondent"  && <RespondentView />}
-      {sub==="cumulative"  && <CumulativeView va={va} />}
-      {sub==="verbal"      && <VerbalEditView va={va} setVa={setVa} locked={locked} />}
+      {sub==="respondent"  && <RespondentView testers={testers} />}
+      {sub==="cumulative"  && <CumulativeView va={va} testers={testers} />}
+      {sub==="verbal"      && <VerbalEditView va={va} setVa={setVa} locked={locked} testers={testers} />}
     </div>
   );
 }
@@ -293,7 +317,7 @@ function ScoreBar({q}) {
   );
 }
 
-function CumulativeView({va}) {
+function CumulativeView({va, testers=[]}) {
   const kw = extractKW(va);
   const hasData = QUESTIONS.some(q => q.scores.length > 0);
   return (
@@ -336,12 +360,12 @@ function CumulativeView({va}) {
 }
 
 // ─── Verbal Edit ──────────────────────────────────────────────────────
-function VerbalEditView({va, setVa, locked}) {
+function VerbalEditView({va, setVa, locked, testers=[]}) {
   const [open, setOpen] = useState(null);
   const [phase, setPhase] = useState("P1");
   const filtered = VERBAL_QS.filter(q=>q.phase===phase);
   const filled = Object.values(va).filter(v=>v&&v.trim()).length;
-  const total = VERBAL_QS.length*TESTERS.length;
+  const total = VERBAL_QS.length*Math.max(testers.length,1);
   const get = (ti,id) => va[`${id}_${ti}`]||"";
   const set = (ti,id,v) => { if (!locked) setVa(p=>({...p,[`${id}_${ti}`]:v})); };
 
@@ -380,9 +404,9 @@ function VerbalEditView({va, setVa, locked}) {
               </div>
               {isOpen && (
                 <div style={{padding:"0 15px 13px",borderTop:`1px solid ${C.border}`}}>
-                  {TESTERS.map((t,i)=>(
+                  {(testers.length>0?testers:TESTERS).map((t,i)=>(
                     <div key={i} style={{marginTop:10}}>
-                      <div style={{fontSize:11,fontWeight:700,color:C.mid,marginBottom:3}}>T{i+1} · {t.facilitator} · {t.gender} · {2025-t.birth}세</div>
+                      <div style={{fontSize:11,fontWeight:700,color:C.mid,marginBottom:3}}>T{i+1} · {t.진행자||t.facilitator||"—"} · {t.성별||t.gender}</div>
                       <textarea
                         value={get(i,q.id)}
                         onChange={e=>set(i,q.id,e.target.value)}
@@ -404,8 +428,8 @@ function VerbalEditView({va, setVa, locked}) {
 }
 
 // ─── Respondent ───────────────────────────────────────────────────────
-function RespondentView() {
-  if (TESTERS.length === 0) {
+function RespondentView({ testers=[] }) {
+  if (testers.length === 0) {
     return (
       <div style={{background:C.white,borderRadius:14,padding:"28px 20px",border:`1px solid ${C.border}`,textAlign:"center"}}>
         <div style={{fontSize:28,marginBottom:12}}>👥</div>
@@ -414,16 +438,17 @@ function RespondentView() {
       </div>
     );
   }
-  const mk = (field, vals) => vals.map(v=>({label:v, count:TESTERS.filter(t=>t[field]===v).length}));
+  const mk = (field, vals) => vals.map(v=>({label:v, count:testers.filter(t=>t[field]===v).length}));
   const gender = mk("gender",["여","남"]);
+  const curYear = new Date().getFullYear();
   const age = [
-    {label:"20~22세", count:TESTERS.filter(t=>(2025-t.birth)<=22).length},
-    {label:"23~26세", count:TESTERS.filter(t=>(2025-t.birth)>=23&&(2025-t.birth)<=26).length},
-    {label:"27~30세", count:TESTERS.filter(t=>(2025-t.birth)>=27).length},
+    {label:"20~22세", count:testers.filter(t=>(curYear-t.출생년)>=20&&(curYear-t.출생년)<=22).length},
+    {label:"23~26세", count:testers.filter(t=>(curYear-t.출생년)>=23&&(curYear-t.출생년)<=26).length},
+    {label:"27~30세", count:testers.filter(t=>(curYear-t.출생년)>=27).length},
   ];
-  const jobs = [...new Set(TESTERS.map(t=>t.job))].map(j=>({label:j,count:TESTERS.filter(t=>t.job===j).length}));
-  const hh   = [...new Set(TESTERS.map(t=>t.household))].map(h=>({label:h,count:TESTERS.filter(t=>t.household===h).length}));
-  const rg   = [...new Set(TESTERS.map(t=>t.region))].map(r=>({label:r,count:TESTERS.filter(t=>t.region===r).length}));
+  const jobs = [...new Set(testers.map(t=>t.직업||""))].filter(Boolean).map(j=>({label:j,count:testers.filter(t=>t.직업===j).length}));
+  const hh   = [...new Set(testers.map(t=>t["1인가구"]||""))].filter(Boolean).map(h=>({label:h,count:testers.filter(t=>t["1인가구"]===h).length}));
+  const rg   = [...new Set(testers.map(t=>t.거주지||""))].filter(Boolean).map(r=>({label:r,count:testers.filter(t=>t.거주지===r).length}));
 
   const DistCard = ({title,rows}) => {
     const tot = rows.reduce((s,r)=>s+r.count,0);
@@ -456,7 +481,7 @@ function RespondentView() {
       <div style={{background:C.white,borderRadius:14,padding:"15px 17px",border:`1px solid ${C.border}`}}>
         <div style={{fontSize:11,fontWeight:700,color:C.light,textTransform:"uppercase",letterSpacing:.5,marginBottom:11}}>진행자별 참가자</div>
         <div style={{display:"flex",flexDirection:"column",gap:7}}>
-          {TESTERS.map((t,i)=>(
+          {(testers.length>0?testers:TESTERS).map((t,i)=>(
             <div key={i} style={{background:C.surface,borderRadius:10,border:`1px solid ${C.border}`,overflow:"hidden"}}>
               <div style={{display:"flex",alignItems:"center",gap:9,padding:"10px 13px"}}>
                 <div style={{width:25,height:25,borderRadius:7,background:`linear-gradient(135deg,${C.primaryLight},${C.primary})`,display:"flex",alignItems:"center",justifyContent:"center",color:"white",fontSize:11,fontWeight:800,flexShrink:0}}>{i+1}</div>
@@ -500,10 +525,10 @@ function RespondentView() {
 }
 
 // ─── Sheets ───────────────────────────────────────────────────────────
-function SheetsView() {
+function SheetsView({ sheetTesters=[] }) {
   const fixedCols = ["진행자","성별","출생년","직업","거주지","1인가구"];
 
-  if (TESTERS.length === 0) {
+  if (sheetTesters.length === 0) {
     return (
       <div>
         <div style={{fontSize:13,color:C.mid,marginBottom:11,lineHeight:1.7}}>
@@ -518,13 +543,15 @@ function SheetsView() {
     );
   }
 
+  const displayTesters = sheetTesters.length > 0 ? sheetTesters : [];
+
   const FixedTable = () => (
     <table className="stbl fixed-col">
       <thead>
         <tr>{fixedCols.map((c,i)=><th key={c} style={{minWidth:fixedWidths[i]}}>{c}</th>)}</tr>
       </thead>
       <tbody>
-        {TESTERS.map((t,i)=>(
+        {(testers.length>0?testers:TESTERS).map((t,i)=>(
           <tr key={i}>
             <td>{t.facilitator}</td><td>{t.gender}</td><td>{t.birth}</td>
             <td>{t.job}</td><td>{t.region}</td><td>{t.household}</td>
@@ -543,7 +570,7 @@ function SheetsView() {
         </tr>
       </thead>
       <tbody>
-        {TESTERS.map((t,i)=>(
+        {(testers.length>0?testers:TESTERS).map((t,i)=>(
           <tr key={i}>
             {QUESTIONS.map(q=><td key={q.id}><span className={`sc s${q.scores[i]}`}>{q.scores[i]}</span></td>)}
             {VERBAL_QS.map(q=><td key={q.id} style={{fontSize:10,color:C.mid}}>—</td>)}

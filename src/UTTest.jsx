@@ -155,7 +155,20 @@ body,#root{font-family:'Noto Sans KR',sans-serif;background:${C.bgOuter};min-hei
 @media(max-width:390px){.shell,.navbar{max-width:100%;}}
 `;
 
-// ─── Question Data ────────────────────────────────────────
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzj4KJhggp0HBIEF9t3My4Fl-8Sv5T8myLAHRqbLHuCECpKDPupbue2UJbyrnNgk2C0/exec";
+
+async function submitToSheets(answers, timestamps) {
+  try {
+    await fetch(SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ answers, timestamps }),
+    });
+  } catch(e) {
+    console.error("Sheets 저장 실패:", e);
+  }
+}
 const PHASE_INFO = [
   { num: 0, label: "온보딩", time: "10분 이내", desc: "시작 전 기본 정보를 입력해 주세요." },
   { num: 1, label: "페인포인트 + 경쟁사 비교", time: "20분–25분", desc: "현재 정책 탐색 경험과 기존 서비스에 대한 의견을 나눠볼게요." },
@@ -370,7 +383,9 @@ export default function UTTest({ onAdmin }) {
           setPhase(p => p + 1);
           setScreen("phase-transit");
         } else {
-          setTimestamps(t => ({ ...t, end: now() }));
+          const finalTs = { ...timestamps, end: now() };
+          setTimestamps(finalTs);
+          submitToSheets(answers, finalTs);
           setScreen("complete");
         }
       }
@@ -715,13 +730,13 @@ function ScoreInput({ scoreKey, val, setAnswer, labels }) {
 
 function CompleteScreen({ timestamps, answers }) {
   const scoringKeys = [
-    { key: "p1_q6", label: "P1-Q6 신청 UX 수월함" },
-    { key: "p1_q8", label: "P1-Q8 용어 이해 용이성" },
-    { key: "p1_q10", label: "P1-Q11 '어려워요' 도움 여부" },
-    { key: "p2_q1", label: "P2-Q1 컬러톤 신뢰감" },
-    { key: "p2_q11", label: "P2-Q15 화면 복잡도" },
-    { key: "p3_q4", label: "P3-Q4 시간 절약 예상" },
-    { key: "p3_q6", label: "P3-Q6 앱 전반 평가" },
+    { key: "p1_q6",  label: "P1-Q6 신청 UX 수월함" },
+    { key: "p1_q8",  label: "P1-Q8 용어 이해 용이성" },
+    { key: "p1_q11", label: "P1-Q11 맞춤 추천 행동 유도" },
+    { key: "p2_q1",  label: "P2-Q1 컬러톤 신뢰감" },
+    { key: "p2_q15", label: "P2-Q15 화면 복잡도" },
+    { key: "p3_q4",  label: "P3-Q4 시간 절약 예상" },
+    { key: "p3_q6",  label: "P3-Q6 앱 전반 평가" },
   ];
   const scored = scoringKeys.filter(s => answers[s.key]);
 
@@ -732,6 +747,10 @@ function CompleteScreen({ timestamps, answers }) {
       <div className="complete-desc">
         소중한 시간 내어 참여해 주셔서 감사합니다.<br />
         답변하신 내용은 방안 서비스 개선에 소중히 활용됩니다.
+      </div>
+      <div style={{ background: C.greenBg, border: `1px solid ${C.green}`, borderRadius: 12, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ fontSize: 16 }}>📤</span>
+        <span style={{ fontSize: 13, fontWeight: 600, color: C.green }}>결과가 Google Sheets에 저장되었습니다</span>
       </div>
       {Object.keys(timestamps).length > 0 && (
         <div className="time-card">
