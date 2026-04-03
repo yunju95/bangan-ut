@@ -31,7 +31,7 @@ const LogoMark = ({ size = 36 }) => (
 const css = `
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
-body,#root{font-family:'Noto Sans KR',sans-serif;background:${C.bgOuter};min-height:100vh;display:flex;justify-content:center;align-items:flex-start;}
+body,#root{font-family:'Noto Sans KR',sans-serif;background:${C.bgOuter};min-height:100vh;}
 .shell{width:100%;max-width:390px;min-height:100vh;background:${C.surface};display:flex;flex-direction:column;position:relative;margin:0 auto;}
 
 /* TOP BAR */
