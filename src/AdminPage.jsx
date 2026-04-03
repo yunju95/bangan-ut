@@ -66,10 +66,9 @@ const TESTERS = []; // 실제 테스트 데이터가 입력되면 채워집니�
 const QUESTIONS = [
   {id:"P1-Q6",  phase:"P1", text:"신청 UX 수월함",           scores:[]},
   {id:"P1-Q8",  phase:"P1", text:"금융/행정 용어 이해 용이성",scores:[]},
-  {id:"P1-Q10", phase:"P1", text:"'어려워요' 정보 도움 여부", scores:[]},
   {id:"P1-Q11", phase:"P1", text:"맞춤 추천 즉각 행동 유도",  scores:[]},
   {id:"P2-Q1",  phase:"P2", text:"컬러톤 신뢰감",             scores:[]},
-  {id:"P2-Q11", phase:"P2", text:"화면 복잡도 (1복잡~5단순)", scores:[]},
+  {id:"P2-Q15", phase:"P2", text:"화면 복잡도 (1복잡~5단순)", scores:[]},
   {id:"P3-Q4",  phase:"P3", text:"탐색 시간/에너지 절약 예상",scores:[]},
   {id:"P3-Q6",  phase:"P3", text:"방안 앱 전반 평가",         scores:[]},
 ];
