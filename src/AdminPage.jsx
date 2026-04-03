@@ -511,20 +511,24 @@ function RespondentView({ testers=[] }) {
               <div style={{borderTop:`1px solid ${C.border}`,padding:"9px 13px",background:C.primaryBg}}>
                 <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:7}}>
                   <span style={{fontSize:10,fontWeight:700,color:C.primary}}>⏱ 총 소요시간</span>
-                  <span style={{fontSize:13,fontWeight:800,color:C.primary}}>{MOCK_DURATION[i]}</span>
+                  <span style={{fontSize:13,fontWeight:800,color:C.primary}}>
+                    {(testers[i] && testers[i]["종료"] && testers[i]["테스트시작"])
+                      ? testers[i]["종료"] + " 종료"
+                      : "—"}
+                  </span>
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:6}}>
                   {[
-                    {label:"시작",    key:"p0"},
-                    {label:"Phase 1", key:"p1"},
-                    {label:"Phase 2", key:"p2"},
-                    {label:"Phase 3", key:"p3"},
-                    {label:"종료",    key:"end"},
+                    {label:"시작",    key:"테스트시작"},
+                    {label:"Phase 1", key:"P1진입"},
+                    {label:"Phase 2", key:"P2진입"},
+                    {label:"Phase 3", key:"P3진입"},
+                    {label:"종료",    key:"종료"},
                   ].map(ph=>(
                     <div key={ph.key} style={{background:C.white,borderRadius:8,padding:"5px 7px",textAlign:"center",border:`1px solid ${C.border}`}}>
                       <div style={{fontSize:9,fontWeight:700,color:C.light,marginBottom:2}}>{ph.label}</div>
                       <div style={{fontSize:11,fontWeight:800,color:C.primary,fontVariantNumeric:"tabular-nums",letterSpacing:"0.5px"}}>
-                        {ph.key==="p0" ? "00:00" : elapsedFmt(MOCK_PHASE_TIMES[i].start, MOCK_PHASE_TIMES[i][ph.key])}
+                        {(testers[i] && testers[i][ph.key]) ? String(testers[i][ph.key]).slice(0,8) : "—"}
                       </div>
                     </div>
                   ))}
