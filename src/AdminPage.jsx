@@ -164,6 +164,7 @@ function downloadCSV(va, locked, sheetData=[]) {
 export default function AdminPage() {
   const [tab, setTab] = useState("admin");
   const [sheetTesters, setSheetTesters] = useState([]);
+  const [sheetVerbals, setSheetVerbals] = useState({});
   const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
@@ -171,11 +172,13 @@ export default function AdminPage() {
       .then(r => r.json())
       .then(data => {
         if (data && Array.isArray(data.testers) && data.testers.length > 0) {
-          // 빈 행 제거 + 최소 진행자 필드 있는 행만 허용
           const valid = data.testers.filter(t =>
             t && typeof t === "object" && (t["진행자"] || t["facilitator"])
           );
           if (valid.length > 0) setSheetTesters(valid);
+        }
+        if (data && data.verbals && typeof data.verbals === "object") {
+          setSheetVerbals(data.verbals);
         }
       })
       .catch(() => setFetchError(true));
@@ -195,7 +198,7 @@ export default function AdminPage() {
               ⚠️ Sheets 연결 실패. 서술형 편집은 정상 사용 가능합니다.
             </div>
           )}
-          {tab==="admin"   && <AdminView sheetTesters={sheetTesters} />}
+          {tab==="admin"   && <AdminView sheetTesters={sheetTesters} sheetVerbals={sheetVerbals} />}
           {tab==="sheets"  && <SheetsView sheetTesters={sheetTesters} />}
           {tab==="compare" && <CompareView />}
         </div>
@@ -205,11 +208,16 @@ export default function AdminPage() {
 }
 
 // ─── Admin ───────────────────────────────────────────────────────────
-function AdminView({ sheetTesters }) {
+function AdminView({ sheetTesters, sheetVerbals={} }) {
   const [sub, setSub] = useState("respondent");
-  const [va, setVa] = useState({});
+  const [va, setVa] = useState(sheetVerbals);
   const [locked, setLocked] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  // sheetVerbals 로드되면 va 초기화
+  useEffect(() => {
+    if (Object.keys(sheetVerbals).length > 0) setVa(sheetVerbals);
+  }, [sheetVerbals]);
 
   const testers = sheetTesters.length > 0 ? sheetTesters : TESTERS;
   const hasData = testers.length > 0;
@@ -401,6 +409,24 @@ function CumulativeView({va, testers=[]}) {
 
 // ─── Verbal Edit ──────────────────────────────────────────────────────
 function VerbalEditView({va, setVa, locked, testers=[]}) {
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
+
+  const saveToSheets = async () => {
+    setSaving(true); setSaveMsg("");
+    try {
+      await fetch(SCRIPT_URL, {
+        method: "POST", mode: "no-cors",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ type: "verbal", verbals: va })
+      });
+      setSaveMsg("✅ 저장되었습니다");
+    } catch(e) {
+      setSaveMsg("❌ 저장 실패");
+    }
+    setSaving(false);
+    setTimeout(() => setSaveMsg(""), 3000);
+  };
   const [open, setOpen] = useState(null);
   const [phase, setPhase] = useState("P1");
   const filtered = VERBAL_QS.filter(q=>q.phase===phase);
@@ -419,6 +445,15 @@ function VerbalEditView({va, setVa, locked, testers=[]}) {
       <div style={{background:C.primaryBg,borderRadius:12,padding:"11px 15px",marginBottom:13,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:6}}>
         <span style={{fontSize:13,color:C.mid,fontWeight:500}}>🎙 녹음 확인 후 답변을 입력해주세요</span>
         <span style={{fontSize:12,fontWeight:700,color:C.primary}}>{filled} / {total} 입력됨</span>
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+        <button
+          onClick={saveToSheets}
+          disabled={saving || locked}
+          style={{padding:"8px 20px",borderRadius:99,background:saving?C.border:C.green,color:"#fff",fontSize:12,fontWeight:700,border:"none",cursor:saving?"not-allowed":"pointer",transition:"all .18s"}}
+        >{saving ? "저장 중..." : "📤 Sheets에 저장"}</button>
+        {saveMsg && <span style={{fontSize:12,color:saveMsg.startsWith("✅")?C.green:C.red,fontWeight:600}}>{saveMsg}</span>}
+      </div>
       </div>
       <div style={{display:"flex",gap:6,marginBottom:11}}>
         {["P1","P2","P3"].map(p=>(
