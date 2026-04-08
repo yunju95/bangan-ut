@@ -454,7 +454,6 @@ function VerbalEditView({va, setVa, locked, testers=[]}) {
         >{saving ? "저장 중..." : "📤 Sheets에 저장"}</button>
         {saveMsg && <span style={{fontSize:12,color:saveMsg.startsWith("✅")?C.green:C.red,fontWeight:600}}>{saveMsg}</span>}
       </div>
-      </div>
       <div style={{display:"flex",gap:6,marginBottom:11}}>
         {["P1","P2","P3"].map(p=>(
           <button key={p} onClick={()=>setPhase(p)} style={{padding:"5px 13px",borderRadius:99,fontSize:11,fontWeight:700,border:"none",cursor:"pointer",background:phase===p?C.primary:C.border,color:phase===p?C.white:C.mid}}>{p}</button>
